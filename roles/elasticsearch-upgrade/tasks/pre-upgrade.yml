@@ -1,0 +1,36 @@
+---
+
+- name: Start the elasticsearch service - {{es_instance_name}}_elasticsearch.service if it is already turned off
+  become: yes
+  service:
+    name: "{{es_instance_name}}_elasticsearch.service"
+    state: started
+
+- name: Wait for service to start
+  wait_for:
+    host: "{{es_config['network.host']}}"
+    port: "{{es_config['http.port']}}"
+    delay: 10
+    connect_timeout: 30
+    msg: "service wait failed"
+
+- name: Turn off shard reallocation
+  local_action: "shell curl -XPUT {{ es_config[\'network.host\'] }}:{{ es_config[\'http.port\'] }}/_cluster/settings -H 'Content-Type: application/json' -d '{\"transient\" : {\"cluster.routing.allocation.enable\" : \"none\" }}'"
+  register: result
+  until: result.stdout.find('"acknowledged"') != -1
+  retries: 30
+  delay: 10
+  changed_when: result.stdout.find('"acknowledged":true') != -1
+
+- name: Stop indexing and perform a synced flush
+  local_action: "shell curl -XPUT {{ es_config[\'network.host\'] }}:{{ es_config[\'http.port\'] }}/_flush/synced?pretty"
+  register: result
+  until: result.rc == 0
+  retries: 30
+  delay: 10
+
+- name: Stop the elasticsearch service - {{es_instance_name}}_elasticsearch.service
+  become: yes
+  service:
+    name: "{{es_instance_name}}_elasticsearch.service"
+    state: stopped

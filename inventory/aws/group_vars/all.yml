@@ -1,0 +1,8 @@
+---
+es_major_version: "6.x"
+es_version: "6.2.4"
+es_data_dirs: '/var/lib/elasticsearch'
+es_user: elasticsearch
+es_group: elasticsearch
+es_process_name: elasticsearch
+cluster_name: elasticsearch

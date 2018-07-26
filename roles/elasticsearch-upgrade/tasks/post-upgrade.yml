@@ -1,0 +1,37 @@
+---
+
+- name: Start the elasticsearch service - {{es_instance_name}}_elasticsearch.service
+  become: yes
+  service:
+    name: "{{es_instance_name}}_elasticsearch.service"
+    state: started
+
+- name: Wait for service to start
+  wait_for:
+    host: "{{es_config['network.host']}}"
+    port: "{{es_config['http.port']}}"
+    delay: 10
+    connect_timeout: 30
+
+- name: "Wait for elasticsearch running on node {{inventory_hostname}}"
+  local_action: "shell curl -s -m 2 '{{ es_config[\'network.host\'] }}:{{ es_config[\'http.port\'] }}/_cat/nodes?h=name' | grep -E '^{{inventory_hostname}}' "
+  register: result
+  until: result.rc == 0
+  retries: 30
+  delay: 10
+
+- name: Turn on shard allocation
+  local_action: "shell curl -XPUT {{ es_config[\'network.host\'] }}:{{ es_config[\'http.port\'] }}/_cluster/settings -H 'Content-Type: application/json' -d '{\"transient\" : {\"cluster.routing.allocation.enable\" : \"all\" }}'"
+  register: result
+  until: result.stdout.find("acknowledged") != -1
+  retries: 30
+  delay: 10
+  changed_when: result.stdout.find('"acknowledged":true') != -1
+  when: shard_alloc_enable|default(true)
+
+- name: Wait until cluster status is green
+  local_action: "shell curl -XGET {{ es_config[\'network.host\'] }}:{{ es_config[\'http.port\'] }}/_cluster/health"
+  register: result
+  until: result.stdout.find('"status":"green"') != -1
+  retries: 30
+  delay: 10

@@ -1,0 +1,31 @@
+---
+
+- debug: msg='Starting pre-tasks ... disabling shard allocation, stopping the indexes and stopping the node - {{inventory_hostname}}'
+  when: stop|default(true)
+
+- name: Stop the node
+  include_tasks: pre-upgrade.yml
+  when: stop|default(true)
+
+- name: upgrade elasticsearch
+  include_role:
+    name: elasticsearch
+    tasks_from: "{{item}}"
+    vars_from: "{{ansible_os_family}}"
+  with_items:
+    - elasticsearch-parameters
+    - elasticsearch
+    - elasticsearch-plugins
+  when: upgrade|default(false)
+
+- debug: msg='Upgrade completed at node - {{inventory_hostname}}'
+
+- debug: msg='Starting post-tasks ... enabling shard allocation, stopping the indices, and starting the node - {{inventory_hostname}}'
+  when: start|default(true)
+
+- name: Start the node
+  include_tasks: post-upgrade.yml
+  when: start|default(true)
+
+- debug: msg='Node - {{inventory_hostname}} is up and cluster health is green'
+  when: start|default(true)

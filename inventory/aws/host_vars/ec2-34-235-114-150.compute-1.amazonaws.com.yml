@@ -1,0 +1,4 @@
+---
+es_instance_name: "master-node-1"
+es_heap_size: "512m"
+

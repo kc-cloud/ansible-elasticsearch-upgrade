@@ -1,0 +1,11 @@
+es_config:
+  network.host: '{{inventory_hostname}}'
+  discovery.zen.ping.unicast.hosts: "{{ groups['all'] | map('extract', hostvars, ['ansible_eth0', 'ipv4', 'address']) | join(':9300,') }}:9300"
+  http.port: 9200
+  transport.tcp.port: 9300
+  node.data: true
+  node.master: true
+  discovery.zen.minimum_master_nodes: 2
+  cluster.name: '{{cluster_name}}'
+es_api_host: '{{inventory_hostname}}'
+es_api_port: 9200

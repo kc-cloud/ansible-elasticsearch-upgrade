@@ -1,0 +1,4 @@
+---
+es_instance_name: "client-node"
+es_heap_size: "512m"
+

@@ -1,0 +1,11 @@
+---
+
+- hosts: all
+  gather_facts: true
+  roles:
+    - { role: elasticsearch }
+  vars:
+    es_major_version: "5.x"
+    es_version: "5.6.9"
+
+

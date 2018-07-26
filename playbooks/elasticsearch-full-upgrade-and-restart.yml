@@ -1,0 +1,29 @@
+---
+
+- hosts: all
+  gather_facts: true
+  tasks:
+    - set_fact: es_major_version="6.x"
+    - set_fact: es_version="6.2.4"
+
+- hosts: all
+  roles:
+    - { role: es-admin, stop: true, start: false }
+
+- hosts: all
+  roles:
+    - { role: es-admin, upgrade: true }
+
+- hosts: master-nodes
+  roles:
+    - { role: es-admin, stop: false, start: true, shard_alloc_enable: false }
+
+- hosts: all:!master-nodes
+  gather_facts: true
+  roles:
+    - { role: es-admin, stop: false, start: true, shard_alloc_enable: false  }
+
+- hosts: master-nodes[0]
+  gather_facts: true
+  roles:
+    - { role: es-admin, stop: false, start: true, shard_alloc_enable: false   }
